@@ -27,16 +27,26 @@ class User implements UserInterface, \Serializable
      */
     private $password;
 
+    /**
+     * @return int|null
+     */
     public function getId(): ?int
     {
         return $this->id;
     }
 
+    /**
+     * @return string|null
+     */
     public function getUsername(): ?string
     {
         return $this->username;
     }
 
+    /**
+     * @param string $username
+     * @return $this
+     */
     public function setUsername(string $username): self
     {
         $this->username = $username;
@@ -44,11 +54,18 @@ class User implements UserInterface, \Serializable
         return $this;
     }
 
+    /**
+     * @return string|null
+     */
     public function getPassword(): ?string
     {
         return $this->password;
     }
 
+    /**
+     * @param string $password
+     * @return $this
+     */
     public function setPassword(string $password): self
     {
         $this->password = $password;
@@ -56,6 +73,9 @@ class User implements UserInterface, \Serializable
         return $this;
     }
 
+    /**
+     * @return string[]
+     */
     public function getRoles()
     {
         return ["ROLE_USER"];
@@ -71,6 +91,9 @@ class User implements UserInterface, \Serializable
         // TODO: Implement eraseCredentials() method.
     }
 
+    /**
+     * @return string
+     */
     public function serialize()
     {
         return serialize([
@@ -80,6 +103,9 @@ class User implements UserInterface, \Serializable
         ]);
     }
 
+    /**
+     * @param string $serialized
+     */
     public function unserialize($serialized)
     {
         list(
