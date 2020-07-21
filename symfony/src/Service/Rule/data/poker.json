@@ -1,0 +1,133 @@
+{
+  "rule_name": "poker",
+  "cards_hand": 5,
+  "card_numbers": {
+    "2": 1,
+    "3": 2,
+    "4": 3,
+    "5": 4,
+    "6": 5,
+    "7": 6,
+    "8": 7,
+    "9": 8,
+    "T": 9,
+    "J": 10,
+    "Q": 11,
+    "K": 12,
+    "A": 13
+  },
+  "rules": {
+    "royal_flush" : {
+      "ranking": 10,
+      "suits": "=",
+      "number" : {
+        "type": "sequence",
+        "start": "A"
+      },
+      "sequence": {
+        "1": 5
+      }
+    },
+    "straight_flush" : {
+      "ranking": 9,
+      "suits": "=",
+      "number" : {
+        "type": "sequence",
+        "start": "*"
+      },
+      "sequence": {
+        "1": 5
+      }
+    },
+    "four_of_a_kind" : {
+      "ranking": 8,
+      "suits": "*",
+      "number" : {
+        "type": "=",
+        "start": "*"
+      },
+      "sequence": {
+        "1": 4
+      }
+    },
+    "full_house" : {
+      "ranking": 7,
+      "suits": "*",
+      "number" : {
+        "type": "=",
+        "start": "*"
+      },
+      "sequence": {
+        "1": 3,
+        "2": 2
+      }
+    },
+    "flush" : {
+      "ranking": 6,
+      "suits": "=",
+      "number" : {
+        "type": "*",
+        "start": "*"
+      },
+      "sequence": {
+        "1": 5
+      }
+    },
+    "straight" : {
+      "ranking": 5,
+      "suits": "*",
+      "number" : {
+        "type": "=",
+        "start": "*"
+      },
+      "sequence": {
+        "1": 5
+      }
+    },
+    "tree_of_a_kind" : {
+      "ranking": 4,
+      "suits": "*",
+      "number" : {
+        "type": "=",
+        "start": "*"
+      },
+      "sequence": {
+        "1": 3
+      }
+    },
+    "two_pair" : {
+      "ranking": 3,
+      "suits": "*",
+      "number" : {
+        "type": "=",
+        "start": "*"
+      },
+      "sequence": {
+        "1": 2,
+        "2": 2
+      }
+    },
+    "one_pair" : {
+      "ranking": 2,
+      "suits": "*",
+      "number" : {
+        "type": "=",
+        "start": "*"
+      },
+      "sequence": {
+        "1": 2
+      }
+    },
+    "high_card" : {
+      "ranking": 1,
+      "suits": "*",
+      "number" : {
+        "type": ">",
+        "start": "*"
+      },
+      "sequence": {
+        "1": 1
+      }
+    }
+  }
+}
