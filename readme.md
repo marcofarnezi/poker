@@ -1,3 +1,5 @@
+mkdir mysql
+
 docker-compose up -d --build
 
 docker exec -it symfonydocker_php_1  bash
