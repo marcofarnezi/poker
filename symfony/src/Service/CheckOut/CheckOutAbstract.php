@@ -1,6 +1,7 @@
 <?php
 namespace App\Service\CheckOut;
 
+use App\Service\CardService;
 use App\Service\Rule\RuleAbstraction;
 
 /**
@@ -30,11 +31,19 @@ abstract class CheckOutAbstract
     private $ranking;
 
     /**
-     * CheckOutAbstract constructor.
+     * @var CardService
      */
-    public function __construct()
+    private $card_service;
+
+    /**
+     * CheckOutAbstract constructor.
+     * @param CardService $card_service
+     */
+    public function __construct(CardService $card_service)
     {
-        $this->getRule();
+        $rules = $this->getRule();
+        $card_service->setRules($rules);
+        $this->card_service = $card_service;
     }
 
     /**
@@ -89,8 +98,40 @@ abstract class CheckOutAbstract
         }
         if (! empty($winner)) {
             $round[$winner]['winner'] = true;
+            return $round;
         }
+
+        $winner = $this->findWinnerHighestCard($round);
+        $round[$winner]['winner'] = true;
         return $round;
+    }
+
+    /**
+     * @param array $round
+     * @return int
+     */
+    protected function findWinnerHighestCard(array $round)
+    {
+        $winner = 0;
+        $highest_card = 0;
+        foreach ($round as $player_id => &$hand) {
+            $hand['cards'] = $this->orderCards($hand['cards']);
+            $number = $this->card_service->getCardNumber(end($hand['cards']));
+            $current_highest_card = $this->card_service->getHighestCard($number);
+            if ($current_highest_card > $highest_card) {
+                $winner = $player_id;
+                $highest_card = $current_highest_card;
+            } else if($current_highest_card == $highest_card) {
+                $winner = 0;
+            }
+            array_pop($hand['cards']);
+        }
+
+        if (empty($winner) && ! empty($hand['cards'])) {
+            return $this->findWinnerHighestCard($round);
+        }
+
+        return $winner;
     }
 
     /**
@@ -110,6 +151,8 @@ abstract class CheckOutAbstract
      */
     protected function checkHand(array $hand): string
     {
+        $rule = '';
+        $rule_name = '';
         foreach ($this->rule->getRules() as $rule_name => $rule)
         {
             $hand = $this->orderCards($hand);
@@ -126,8 +169,8 @@ abstract class CheckOutAbstract
         }
 
         $this->ranking = $rule['ranking'];
-        $card_number = $this->rule->getCardNumbers();
-        $this->value = $card_number[substr(end($hand), 0, 1)];
+        $card = $this->card_service->getCardNumber(end($hand));
+        $this->value = $this->card_service->getHighestCard($card);
         return $rule_name;
     }
 
@@ -137,13 +180,12 @@ abstract class CheckOutAbstract
      */
     private function orderCards(array $hand)
     {
-        $card_number = $this->rule->getCardNumbers();
-
-        usort($hand, function ($a, $b) use ($card_number)
+        $card_service = $this->card_service;
+        usort($hand, function ($a, $b) use ($card_service)
         {
-            $a = substr($a, 0, 1);
-            $b = substr($b, 0, 1);
-            return $card_number[$a] <=> $card_number[$b];
+            $a = $card_service->getCardNumber($a);
+            $b = $card_service->getCardNumber($b);
+            return $card_service->getHighestCard($a) <=> $card_service->getHighestCard($b);
         });
 
         return $hand;
@@ -160,9 +202,8 @@ abstract class CheckOutAbstract
         $biggest = 1;
 
         foreach ($hand as $card) {
-            $number = substr($card, 0, 1);
-            $card_number = $this->rule->getCardNumbers();
-            $value = $card_number[$number];
+            $number = $this->card_service->getCardNumber($card);
+            $value = $this->card_service->getHighestCard($number);
             if (empty($fist)) {
                 $fist = $value;
                 $sequence_amount ++;
@@ -194,14 +235,14 @@ abstract class CheckOutAbstract
         } elseif ($rule['number']['type'] == 'sequence') {
             if ($this->sequenceAmount($hand) == end($rule['sequence'])) {
                 if ($rule['number']['start'] != "*") {
-                    return $rule['number']['start'] == substr(end($hand), 0, 1);
+                    return $rule['number']['start'] == $this->card_service->getCardNumber(end($hand));
                 }
                 return true;
             }
         } elseif ($rule['number']['type'] == '=') {
             $numbers = [];
             foreach ($hand as $card) {
-                $numbers[] = substr($card, 0, 1);
+                $numbers[] = $this->card_service->getCardNumber($card);
             }
             $repetitions = array_count_values($numbers);
             if ($this->checkRepetitions($repetitions, $rule)) {
@@ -219,12 +260,12 @@ abstract class CheckOutAbstract
      */
     private function checkRepetitions(array $repetitions, array $rule): bool
     {
-        $card_number = $this->rule->getCardNumbers();
         $this->value = 0;
         foreach ($rule['sequence'] as $key_rule => $repetition) {
             foreach ($repetitions as $key_repetition => $num_repetition) {
                 if ($repetition == $num_repetition) {
-                    $this->value = $this->value < $card_number[$key_repetition] ? $card_number[$key_repetition] : $this->value;
+                    $highest_card = $this->card_service->getHighestCard($key_repetition);
+                    $this->value = $this->value < $highest_card ? $highest_card : $this->value;
                     unset($rule['sequence'][$key_rule]);
                     unset($repetitions[$key_repetition]);
                     break;
@@ -243,15 +284,15 @@ abstract class CheckOutAbstract
     {
         $suit = "";
         foreach ($hand as $card) {
-            $current_suit = substr($card, 1, 1);
+            $current_suit = $this->card_service->getCardSuit($card);
             $suit = empty($suit) ? $current_suit : $suit;
 
             if ($current_suit != $suit) {
                 return false;
             }
         }
-        $card_number = $this->rule->getCardNumbers();
-        $this->value = $card_number[substr(end($hand), 0, 1)];
+        $number = $this->card_service->getCardNumber(end($hand));
+        $this->value = $this->card_service->getHighestCard($number);
         return true;
     }
 
